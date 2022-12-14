@@ -2,65 +2,79 @@ const input = await Deno.readTextFile("input.txt");
 
 const lines = input.split("\r\n").filter((l) => !!l);
 
-const WIN = 6;
-const LOSS = 0;
-const DRAW = 3;
+type Outcome = "win" | "lose" | "draw";
+type Shape = "rock" | "paper" | "scissors";
 
-const ROCK = 1;
-const PAPER = 2;
-const SCISSOR = 3;
-
-const NEEDSLOSS = 1;
-const NEEDSDRAW = 2;
-const NEEDSWIN = 3;
-
-const shapes: Record<string, number> = {
-  A: ROCK,
-  B: PAPER,
-  C: SCISSOR,
-  X: ROCK,
-  Y: PAPER,
-  Z: SCISSOR,
+const shapeMap: Record<string, Shape> = {
+  A: "rock",
+  B: "paper",
+  C: "scissors",
+  X: "rock",
+  Y: "paper",
+  Z: "scissors",
+};
+const outcomeMap: Record<string, Outcome> = {
+  X: "lose",
+  Y: "draw",
+  Z: "win",
 };
 
-const chooseShape = (oppShape: number, outcome: number) => {
-  if (outcome === NEEDSWIN) {
-    if (oppShape === ROCK) return PAPER;
-    if (oppShape === PAPER) return SCISSOR;
-    if (oppShape === SCISSOR) return ROCK;
-  }
-  if (outcome === NEEDSDRAW) {
-    if (oppShape === ROCK) return ROCK;
-    if (oppShape === PAPER) return PAPER;
-    if (oppShape === SCISSOR) return SCISSOR;
-  }
-  if (outcome === NEEDSLOSS) {
-    if (oppShape === ROCK) return SCISSOR;
-    if (oppShape === PAPER) return ROCK;
-    if (oppShape === SCISSOR) return PAPER;
-  }
-  return 0;
+const matchShape = (shape: string): Shape => shapeMap[shape];
+
+const shapeValues: Record<Shape, number> = {
+  rock: 1,
+  paper: 2,
+  scissors: 3,
+};
+const outcomeValues: Record<Outcome, number> = {
+  win: 6,
+  lose: 0,
+  draw: 3,
 };
 
-const scoreRound = (oppShape: number, myShape: number) => {
-  let score = myShape;
-  if (oppShape === myShape) score += DRAW;
-  if (oppShape === ROCK && myShape === SCISSOR) score += LOSS;
-  if (oppShape === ROCK && myShape === PAPER) score += WIN;
-  if (oppShape === PAPER && myShape === SCISSOR) score += WIN;
-  if (oppShape === PAPER && myShape === ROCK) score += LOSS;
-  if (oppShape === SCISSOR && myShape === ROCK) score += WIN;
-  if (oppShape === SCISSOR && myShape === PAPER) score += LOSS;
-  return score;
+const decideOutcome = (us: Shape, them: Shape): Outcome => {
+  if (us === them) return "draw";
+  if (us === "rock" && them === "scissors") return "win";
+  if (shapeValues[us] === shapeValues[them] + 1) return "win";
+  return "lose";
 };
 
-let total = 0;
-for (let line of lines) {
-  const [oppShape, outcome] = line.split(" ").map((s) => shapes[s]);
-  const result = scoreRound(oppShape, chooseShape(oppShape, outcome));
-  if (result > 0) {
-    total += result;
-  }
-}
+const winShape = (shape: Shape): Shape => {
+  if (shape === "scissors") return "rock";
+  return Object.keys(shapeValues)[shapeValues[shape]] as Shape;
+};
+const loseShape = (shape: Shape): Shape => {
+  if (shape === "rock") return "scissors";
+  return Object.keys(shapeValues)[shapeValues[shape] - 2] as Shape;
+};
 
-console.log({ total });
+const chooseShapeForOutcome = (outcome: Outcome, them: Shape): Shape => {
+  if (outcome === "win") return winShape(them);
+  if (outcome === "lose") return loseShape(them);
+  return them;
+};
+
+const scoreRound = (myShape: Shape, outcome: Outcome) =>
+  shapeValues[myShape] + outcomeValues[outcome];
+
+const part1 = () =>
+  lines.reduce((acc, line) => {
+    const [oppChar, myChar] = line.split(" ");
+
+    const oppShape = matchShape(oppChar);
+    const myShape = matchShape(myChar);
+
+    return acc + scoreRound(myShape, decideOutcome(myShape, oppShape));
+  }, 0);
+
+const part2 = () =>
+  lines.reduce((acc, line) => {
+    const [oppChar, outcomeChar] = line.split(" ");
+    const oppShape = matchShape(oppChar);
+    const outcome = outcomeMap[outcomeChar];
+    const myShape = chooseShapeForOutcome(outcome, oppShape);
+    return acc + scoreRound(myShape, outcome);
+  }, 0);
+
+console.log("part 1 ", part1());
+console.log("part 2 ", part2());
