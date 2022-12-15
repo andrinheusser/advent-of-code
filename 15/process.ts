@@ -88,6 +88,12 @@ class Sensor {
     yield truncateLine([bottom, left]);
     yield truncateLine([left, top]);
   }
+  endX(x: number, y: number) {
+    const yDelta = Math.abs(y - this.coord[1]);
+    const xSteps = this.range - yDelta;
+    const xMidway = this.coord[0] - x;
+    return [this.coord[0] + xSteps, xMidway + xSteps];
+  }
 }
 
 const parseToSensors = (lines: string[]): Sensor[] => {
@@ -111,6 +117,9 @@ const part1 = () => {
     const sensor = sensors.find((s) => s.range >= distance([x, y], s.coord));
     if (sensor) {
       covered++;
+      const [newx, addCovered] = sensor.endX(x, y);
+      covered += addCovered;
+      x = newx;
     }
   }
   return covered;
