@@ -136,19 +136,17 @@ const part2 = () => {
     }
     return acc;
   }, new Set<Sensor>());
-  const candidates = new Set<Coord>();
   for (const sensor of neighbors) {
     for (const border of sensor.getOutsideBorderLines()) {
       for (const point of stepLine(border)) {
-        candidates.add(point);
+        const [x, y] = point;
+        const sensor = sensors.find((s) =>
+          s.range >= distance([x, y], s.coord)
+        );
+        if (!sensor) {
+          return x * 4000000 + y;
+        }
       }
-    }
-  }
-  for (const candidate of candidates) {
-    const [x, y] = candidate;
-    const sensor = sensors.find((s) => s.range >= distance([x, y], s.coord));
-    if (!sensor) {
-      return x * 4000000 + y;
     }
   }
 };
