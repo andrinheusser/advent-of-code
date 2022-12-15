@@ -109,16 +109,24 @@ const minX = (sensors: Sensor[]) =>
 const maxX = (sensors: Sensor[]) =>
   Math.max(...sensors.map((s) => s.coord[0] + s.range));
 
+const distanceWithY = (x: number, b: Coord) =>
+  Math.abs(x - b[0]) + Math.abs(2000000 - b[1]);
+
 const part1 = () => {
-  const sensors = parseToSensors(lines);
   const y = 2000000;
+  let sensors = [
+    ...parseToSensors(lines)
+      .filter((s) => Math.abs(s.coord[1] - y) <= s.range)
+      .sort((a, b) => Math.abs(a.coord[1] - y) - Math.abs(b.coord[1] - y)),
+  ];
+  console.log(sensors.length + " sensors");
   let covered = -1;
   for (let x = minX(sensors); x <= maxX(sensors); x++) {
-    const sensor = sensors.find((s) => s.range >= distance([x, y], s.coord));
+    const sensor = sensors.find((s) => s.range >= distanceWithY(x, s.coord));
     if (sensor) {
-      covered++;
+      sensors = sensors.filter((s) => s !== sensor);
       const [newx, addCovered] = sensor.endX(x, y);
-      covered += addCovered;
+      covered += addCovered + 1;
       x = newx;
     }
   }
