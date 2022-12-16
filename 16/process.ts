@@ -14,7 +14,6 @@ type Connection = {
 type Valve = {
   name: string;
   rate: number;
-  open: boolean;
   tunnels: string[];
   connections?: Connection[];
 };
@@ -41,7 +40,6 @@ const getValves = (lines: string[]) => {
     valves.set(valve, {
       name: valve,
       rate: flowRate,
-      open: false,
       tunnels: connections,
     });
   }
@@ -107,7 +105,6 @@ type State = {
     remaining: number;
     total: number;
   };
-  assigned?: Set<string>;
 };
 
 const pathScore = (
@@ -131,7 +128,6 @@ const pathScore = (
     score += produced;
 
     if (travelTimeRemaining === 0) {
-      // OPEN A VALVE
       if (next && next.rate > 0) {
         rates.push(next.rate);
       }
@@ -150,13 +146,15 @@ const pathScore = (
 };
 
 const step = (state: State) => {
-  const { current, valves, visited, distances, score, time, assigned } = state;
+  const { current, valves, visited, distances, score, time } = state;
   const { remaining, total } = time;
   const pathScores = [score];
   const subPaths = current.connections!.filter((v) => {
     if (visited.find((vs) => vs.name === v.valve.name)) return false;
     const distance = distances.get(current.name + v.valve.name)!;
-    return distance <= remaining && (!assigned || assigned.has(v.valve.name));
+    return (
+      distance <= remaining && valves.find((vs) => vs.name === v.valve.name)
+    );
   });
   for (const subPath of subPaths) {
     const timeRemainingAfterTravel =
@@ -173,7 +171,6 @@ const step = (state: State) => {
         remaining: timeRemainingAfterTravel,
         total,
       },
-      assigned,
     });
     pathScores.push(score);
   }
@@ -199,72 +196,57 @@ const part1 = () => {
   );
 };
 
-const stringToValves = (valves: Valve[], s: string) => {
-  const result: Valve[] = [];
-  for (let i = 0; i < s.length; i += 2) {
-    const name = s.slice(i, i + 2);
-    result.push(valves.find((v) => v.name === name)!);
-  }
-  return result;
-};
-
 // PART 2
 const part2 = () => {
+  const ASSIGNMENT_ROUNDS = 4000;
+  const ASSIGNMENT_BALANCE_FACTOR = 6;
+
   const timeToLearn = 4;
 
-  const valves = [...addConnections(getValves(lines)).values()].filter(
-    (v) => v.connections?.length
-  );
+  const valves: Array<Valve> = [
+    ...addConnections(getValves(lines)).values(),
+  ].filter((v) => v.connections?.length);
+
   const distances = getDistances(valves);
 
-  const combinations: Set<string> = new Set();
-  const valvesWithoutStart = valves.slice(1);
-  for (let i = 0; i < valvesWithoutStart.length; i++) {
-    for (const valve of valvesWithoutStart) {
-      const comb = [
-        valves[0].name,
-        valve.name,
-        ...valvesWithoutStart
-          .filter((v) => v.name !== valve.name)
-          .slice(0, i)
-          .map((v) => v.name),
-      ];
-      combinations.add(comb.sort().join(""));
-    }
+  const start = valves.shift();
+
+  const randomInt = (x: number) => Math.floor(Math.random() * x * 2) - x;
+
+  const assignments: { left: Valve[]; right: Valve[] }[] = [];
+  for (let i = 0; i < ASSIGNMENT_ROUNDS; i++) {
+    const left = valves
+      .sort(() => Math.random() - 0.5)
+      .slice(
+        0,
+        valves.length / 2 +
+          randomInt(Math.floor(valves.length / ASSIGNMENT_BALANCE_FACTOR))
+      );
+    const right = valves.filter((v) => !left.find((l) => l.name === v.name));
+    assignments.push({ left, right });
   }
 
-  const leftValves: Valve[][] = [...combinations.values()].map((s) =>
-    stringToValves(valves, s)
-  );
-
-  const scores: Array<number> = [];
-  for (const left of leftValves) {
-    if (left.length < 4) continue;
-    const right = [
-      valves[0],
-      ...valvesWithoutStart.filter((v) => !left.find((l) => l.name === v.name)),
-    ];
-
+  const scores: number[] = [];
+  for (const { left, right } of assignments) {
+    const leftWithStart = [start!, ...left];
     const leftScore = step({
-      current: left[0],
-      valves: valves,
-      visited: [left[0]],
-      distances,
+      current: leftWithStart[0],
+      valves: leftWithStart,
+      visited: [leftWithStart[0]],
+      distances: distances,
       score: 0,
       time: { remaining: MINUTES - timeToLearn, total: MINUTES - timeToLearn },
-      assigned: new Set(left.map((v) => v.name)),
     });
+    const rightWithStart = [start!, ...right];
     const rightScore = step({
-      current: right[0],
-      valves,
-      visited: [right[0]],
-      distances,
+      current: rightWithStart[0],
+      valves: rightWithStart,
+      visited: [rightWithStart[0]],
+      distances: distances,
       score: 0,
       time: { remaining: MINUTES - timeToLearn, total: MINUTES - timeToLearn },
-      assigned: new Set(right.map((v) => v.name)),
     });
-    const score = leftScore + rightScore;
-    scores.push(score);
+    scores.push(leftScore + rightScore);
   }
   return Math.max(...scores);
 };
