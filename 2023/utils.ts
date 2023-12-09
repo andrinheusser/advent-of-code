@@ -68,3 +68,7 @@ export async function timedSolution(
     console.log(`Time Part ${part}: ${times_part_t1 - times_part_t0} ms`);
   });
 }
+
+export const gcd = (a: number, b: number): number => a ? gcd(b % a, a) : b;
+// usage: Array<number>.reduce(lcm)
+export const lcm = (a: number, b: number): number => a * b / gcd(a, b);
