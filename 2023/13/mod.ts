@@ -1,27 +1,40 @@
 import { loadFile, splitLines, timedSolution } from "../utils.ts";
 
-function findHorizontalReflection(data: string[], wasRotated = false) {
-  const reflectionIndexes: number[] = [];
-  for (let i = 0; i < data.length - 1; i++) {
-    const current = data[i];
-    const next = data[i + 1];
-    if (current === next) {
-      reflectionIndexes.push(i);
-    }
-  }
-  for (const index of reflectionIndexes) {
-    let correct = true;
-    for (let a = index, z = index + 1; a >= 0 && z < data.length; a--, z++) {
-      if (data[a] !== data[z]) {
-        correct = false;
-      }
-    }
+type Pattern = {
+  data: string[];
+  wasRotated: boolean;
+};
 
-    if (correct) {
-      const translatedIndex = wasRotated
-        ? data.length - index - 1
-        : (index + 1) * 100;
-      return translatedIndex;
+const compareLines = (
+  a: string,
+  b: string,
+  allowSmudges: number,
+  smudges = 0,
+) =>
+  a.split("").every((char, i) => char === b[i] || smudges++ <= allowSmudges)
+    ? smudges
+    : Infinity;
+
+function findReflection(
+  { data, wasRotated }: Pattern,
+  repairSmudges = 0,
+) {
+  for (let i = 0; i < data.length - 1; i++) {
+    let smudges = compareLines(data[i], data[i + 1], repairSmudges);
+    if (smudges <= repairSmudges) {
+      let correct = true;
+      for (let a = i - 1, z = i + 2; a >= 0 && z < data.length; a--, z++) {
+        smudges += compareLines(data[a], data[z], repairSmudges - smudges);
+        if (smudges > repairSmudges) {
+          correct = false;
+        }
+      }
+      if (correct && smudges === repairSmudges) {
+        const translatedIndex = wasRotated
+          ? data.length - i - 1
+          : (i + 1) * 100;
+        return translatedIndex;
+      }
     }
   }
   return 0;
@@ -39,17 +52,24 @@ function rotate(data: string[]) {
 }
 
 await timedSolution(1, async () => {
-  const data = await loadFile(true).then((f) =>
-    f.split("\n\n").map(splitLines)
+  return await loadFile(true).then((f) => f.split("\n\n").map(splitLines))
+    .then((data) =>
+      data.map((pattern) => [
+        { data: pattern, wasRotated: false },
+        { data: rotate(pattern), wasRotated: true },
+      ]).flat().reduce((sum, pattern) => sum + findReflection(pattern, 0), 0)
+    );
+});
+
+await timedSolution(2, async () => {
+  return await loadFile(true).then((f) =>
+    f.split("\n\n").map(splitLines).map(
+      (
+        pattern,
+      ) => [{ data: pattern, wasRotated: false }, {
+        data: rotate(pattern),
+        wasRotated: true,
+      }],
+    ).flat().reduce((sum, pattern) => sum + findReflection(pattern, 1), 0)
   );
-  const patterns = data.map((pattern) => {
-    return {
-      original: pattern,
-      rotated: rotate(pattern),
-    };
-  });
-  return patterns.reduce((sum, { original, rotated }) => {
-    return sum + findHorizontalReflection(original) +
-      findHorizontalReflection(rotated, true);
-  }, 0);
 });
