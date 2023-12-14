@@ -68,3 +68,37 @@ export async function timedSolution(
 export const gcd = (a: number, b: number): number => a ? gcd(b % a, a) : b;
 // usage: Array<number>.reduce(lcm)
 export const lcm = (a: number, b: number): number => a * b / gcd(a, b);
+
+// for grid[y][x] = string
+export function rotate2DGridEast(grid: string[][]): string[][] {
+  const rows = grid.length;
+  const cols = grid[0].length;
+
+  const rotated: string[][] = Array(cols).fill(null).map(() =>
+    Array(rows).fill("")
+  );
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      rotated[x][rows - y - 1] = grid[y][x];
+    }
+  }
+
+  return rotated;
+}
+export function rotate2DGridWest(grid: string[][]): string[][] {
+  const rows = grid.length;
+  const cols = grid[0].length;
+
+  const rotated: string[][] = Array(cols).fill(null).map(() =>
+    Array(rows).fill("")
+  );
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      rotated[cols - x - 1][y] = grid[y][x];
+    }
+  }
+
+  return rotated;
+}
