@@ -36,25 +36,21 @@ export function* iter_window<T>(
   }
 }
 
-/**
- * Asynchronously reads the input file in chunks and yields each chunk.
- * @param loadActualInput Flag indicating whether to load the actual input file or the test file.
- * @returns An async generator that yields each chunk of the file.
- */
-export async function* readChunks(loadActualInput = false) {
-  const file = await Deno.open(loadActualInput ? "./input.txt" : "./test.txt");
-  const reader = file.readable.getReader();
-  let done = false;
-  do {
-    const result = await reader.read();
-    done = result.done;
-
-    if (result.value) {
-      yield decoder.decode(result.value);
-    }
-  } while (!done);
-
-  reader.releaseLock();
+export async function* fileContents(
+  fileName: string,
+  bufferSize = 1,
+): AsyncGenerator<[string, number]> {
+  const file = await Deno.open(fileName, { read: true });
+  const fileInfo = await file.stat();
+  const buf = new Uint8Array(bufferSize);
+  const decoder = new TextDecoder();
+  if (!fileInfo.isFile) throw new Error(`${fileName} is not a file`);
+  let chunkIndex = 0;
+  while (await file.read(buf)) {
+    const text = decoder.decode(buf);
+    yield [text, chunkIndex++];
+  }
+  file.close();
 }
 
 export async function timedSolution(
