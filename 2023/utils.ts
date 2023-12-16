@@ -102,3 +102,4 @@ export function rotate2DGridWest(grid: string[][]): string[][] {
 
   return rotated;
 }
+

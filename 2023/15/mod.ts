@@ -9,42 +9,42 @@ await timedSolution(1, async () => {
     data.replaceAll("\n", "").split(",").reduce((a, s) => a + hash(s), 0)
   );
 });
+new Map();
 
-type Lens = {
-  label: string;
-  focalLength: number;
-};
+class HolidayASCIIStringHelperManualArrangementProcedure {
+  boxes: Map<number, Array<{ label: string; focalLength: number }>> = new Map(
+    [...Array.from({ length: 256 })].map((_, i) => [i, []]),
+  );
+  instruction(op: string, label: string, focalLength: number) {
+    const box = this.boxes.get(hash(label))!,
+      lensIndex = box.findIndex((l) => l.label === label);
+    if (lensIndex === -1) {
+      return op === "=" ? box.push({ label, focalLength }) : null;
+    }
+    return op === "-"
+      ? box.splice(lensIndex, 1)
+      : box[lensIndex].focalLength = focalLength;
+  }
+  get score() {
+    return [...this.boxes.entries()].reduce(
+      (a, [i, lenses]) =>
+        lenses.reduce(
+          (acc, { focalLength }, lensIndex) =>
+            acc + (1 + i) * (1 + lensIndex) * focalLength,
+          a,
+        ),
+      0,
+    );
+  }
+}
 
 await timedSolution(2, async () => {
-  const regex = /([a-z]+)(=|-)(\d*)/g;
-
-  const boxes: Map<number, Array<Lens>> = new Map();
-  const instructions = await loadFile(true).then((data) =>
-    data.replaceAll("\n", "").split(",").map((s) => {
+  const regex = /([a-z]+)(=|-)(\d*)/g,
+    hashMap = new HolidayASCIIStringHelperManualArrangementProcedure();
+  return await loadFile(true).then((data) =>
+    data.split(",").forEach((s) => {
       const [_, label, op, lens] = [...s.matchAll(regex)][0];
-      return {
-        label: label,
-        boxIndex: hash(label),
-        op,
-        lens: lens ? Number(lens) : 0,
-      };
+      hashMap.instruction(op, label, Number(lens));
     })
-  );
-  instructions.forEach(({ boxIndex, op, lens, label }) => {
-    if (!boxes.has(boxIndex)) boxes.set(boxIndex, []);
-    const box = boxes.get(boxIndex)!;
-    if (op === "-") {
-      const lensIndex = box.findIndex((l) => l.label === label);
-      if (lensIndex !== -1) box.splice(lensIndex, 1);
-    } else if (op === "=") {
-      const existingLens = box.find((l) => l.label === label);
-      if (existingLens) existingLens.focalLength = lens;
-      else box.push({ label, focalLength: lens });
-    }
-  });
-  return [...boxes.entries()].reduce((a, [i, lenses]) => {
-    return lenses.reduce((acc, { focalLength }, lensIndex) => {
-      return acc + (1 + i) * (1 + lensIndex) * focalLength;
-    }, a);
-  }, 0);
+  ).then(() => hashMap.score);
 });
