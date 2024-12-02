@@ -1,4 +1,4 @@
-import { loadFile, timedSolution } from "../utils.ts";
+import { loadFile, timedSolution } from "../../utils/utils.ts";
 
 type MapRule = [number, number, number];
 type PreparedRule = {

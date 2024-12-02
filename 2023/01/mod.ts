@@ -1,4 +1,4 @@
-import { loadFile, splitLines, timedSolution } from "../utils.ts";
+import { loadFile, splitLines, timedSolution } from "../../utils/utils.ts";
 
 await timedSolution(1, async () => {
   const data = await loadFile(true).then(splitLines);

@@ -1,4 +1,4 @@
-import { fileContents, timedSolution } from "../utils.ts";
+import { fileContents, timedSolution } from "../../utils/utils.ts";
 
 type State = {
   char: string;

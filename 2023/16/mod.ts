@@ -1,4 +1,4 @@
-import { loadFile, splitLines, timedSolution } from "../utils.ts";
+import { loadFile, splitLines, timedSolution } from "../../utils/utils.ts";
 
 type Coords = [x: number, y: number];
 const directions = [

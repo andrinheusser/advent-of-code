@@ -3,7 +3,7 @@ import {
   rotate2DGridEast,
   splitLines,
   timedSolution,
-} from "../utils.ts";
+} from "../../utils/utils.ts";
 
 function paint(grid: string[][]) {
   console.log(

@@ -1,4 +1,4 @@
-import { loadFile, timedSolution } from "../utils.ts";
+import { loadFile, timedSolution } from "../../utils/utils.ts";
 
 type Coord = [x: number, y: number];
 type Galaxies = Array<Coord>;

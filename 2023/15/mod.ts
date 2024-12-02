@@ -1,4 +1,4 @@
-import { loadFile, timedSolution } from "../utils.ts";
+import { loadFile, timedSolution } from "../../utils/utils.ts";
 
 function hash(s: string) {
   return s.split("").reduce((a, b) => (a + b.charCodeAt(0)) * 17 % 256, 0);

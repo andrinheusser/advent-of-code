@@ -1,4 +1,4 @@
-import { loadFile, splitLines, timedSolution } from "../utils.ts";
+import { loadFile, splitLines, timedSolution } from "../../utils/utils.ts";
 
 function isSymbol(s: string | undefined) {
   return !!s && s !== "." && isNaN(Number(s));
