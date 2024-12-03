@@ -1,3 +1,5 @@
+import { TextLineStream } from "jsr:@std/streams@0.223.0/text-line-stream";
+
 const decoder = new TextDecoder();
 
 export function decode(value: Uint8Array | undefined) {
@@ -9,16 +11,15 @@ export function splitLines(value: string) {
 
 export async function loadFile<T extends boolean>(loadActualInput = false) {
   const data = await Deno.readFile(
-    loadActualInput ? "./input.txt" : "./test.txt",
-  )
-    .then(decode);
+    loadActualInput ? "./input.txt" : "./test.txt"
+  ).then(decode);
   return data;
 }
 
 export function* iter_window<T>(
   iterable: Iterable<T>,
   size: number,
-  rest: "discard" | "keep" = "discard",
+  rest: "discard" | "keep" = "discard"
 ) {
   const iterator = iterable[Symbol.iterator]();
   let result = iterator.next();
@@ -38,7 +39,7 @@ export function* iter_window<T>(
 
 export async function* fileContents(
   fileName: string,
-  bufferSize = 1,
+  bufferSize = 1
 ): AsyncGenerator<[string, number]> {
   const file = await Deno.open(fileName, { read: true });
   const fileInfo = await file.stat();
@@ -55,7 +56,7 @@ export async function* fileContents(
 
 export async function timedSolution(
   part: number,
-  solution: () => Promise<string | number>,
+  solution: () => Promise<string | number>
 ) {
   const times_part_t0 = performance.now();
   return await solution().then((solution) => {
@@ -65,18 +66,18 @@ export async function timedSolution(
   });
 }
 
-export const gcd = (a: number, b: number): number => a ? gcd(b % a, a) : b;
+export const gcd = (a: number, b: number): number => (a ? gcd(b % a, a) : b);
 // usage: Array<number>.reduce(lcm)
-export const lcm = (a: number, b: number): number => a * b / gcd(a, b);
+export const lcm = (a: number, b: number): number => (a * b) / gcd(a, b);
 
 // for grid[y][x] = string
 export function rotate2DGridEast(grid: string[][]): string[][] {
   const rows = grid.length;
   const cols = grid[0].length;
 
-  const rotated: string[][] = Array(cols).fill(null).map(() =>
-    Array(rows).fill("")
-  );
+  const rotated: string[][] = Array(cols)
+    .fill(null)
+    .map(() => Array(rows).fill(""));
 
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
@@ -90,9 +91,9 @@ export function rotate2DGridWest(grid: string[][]): string[][] {
   const rows = grid.length;
   const cols = grid[0].length;
 
-  const rotated: string[][] = Array(cols).fill(null).map(() =>
-    Array(rows).fill("")
-  );
+  const rotated: string[][] = Array(cols)
+    .fill(null)
+    .map(() => Array(rows).fill(""));
 
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
@@ -103,3 +104,41 @@ export function rotate2DGridWest(grid: string[][]): string[][] {
   return rotated;
 }
 
+export async function asyncReduce<T, U>(
+  iterable: AsyncIterable<T>,
+  reducer: (accumulator: U, value: T) => Promise<U> | U,
+  initialValue: U
+): Promise<U> {
+  let accumulator = initialValue;
+  for await (const item of iterable) {
+    accumulator = await reducer(accumulator, item);
+  }
+  return accumulator;
+}
+
+export async function* char(fileName = "input.txt") {
+  const file = await Deno.open(fileName);
+  const readable = file.readable.pipeThrough(new TextDecoderStream());
+  const reader = readable.getReader();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    for (const char of value) {
+      yield char;
+    }
+  }
+}
+export async function* lines() {
+  const file = await Deno.open("input.txt");
+  const readable = file.readable
+    .pipeThrough(new TextDecoderStream())
+    .pipeThrough(new TextLineStream());
+  const reader = readable.getReader();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (value === undefined) break;
+    if (done) break;
+    yield value;
+  }
+}
