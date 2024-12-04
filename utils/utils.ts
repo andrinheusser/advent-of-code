@@ -129,8 +129,8 @@ export async function* char(fileName = "input.txt") {
     }
   }
 }
-export async function* lines() {
-  const file = await Deno.open("input.txt");
+export async function* lines(fileName = "input.txt") {
+  const file = await Deno.open(fileName);
   const readable = file.readable
     .pipeThrough(new TextDecoderStream())
     .pipeThrough(new TextLineStream());
